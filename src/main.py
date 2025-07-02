@@ -18,7 +18,7 @@ from src import from_docx_import_Document, cluster_document, research_topic, x_p
 CONCEPT_GENERATION_THRESHOLD = 20 # この投稿数に達したら概念化サイクルを実行
 
 # --- ファイルパス定義 ---
-KNOWLEDGE_BASE_PATH = os.path.join(project_root, 'data', 'knowledge_base', '161217-master-Ryo.docx')
+KNOWLEDGE_BASE_PATH = os.path.join(project_root, 'data', 'knowledge_base', 'persona.txt')
 KNOWLEDGE_ENTRIES_PATH = os.path.join(project_root, 'data', 'knowledge_base', 'knowledge_entries.json')
 HIGH_LEVEL_CONCEPTS_PATH = os.path.join(project_root, 'data', 'knowledge_base', 'high_level_concepts.json')
 ACTIVITY_CLUSTERS_PATH = os.path.join(project_root, 'data', 'knowledge_base', 'activity_clusters.json')
