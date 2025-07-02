@@ -8,19 +8,27 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import config
 
-def read_text_from_docx(file_path: str) -> str:
-    """docxファイルから全てのテキストを抽出し、一つの文字列として結合して返す。"""
+def read_text_from_file(file_path: str) -> str:
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"エラー: ファイルが見つかりません - {file_path}")
-    
-    try:
-        document = Document(file_path)
-        full_text = "\n".join([para.text for para in document.paragraphs if para.text.strip()])
-        if not full_text:
-            print("警告: ドキュメント内にテキストを含む段落が見つかりませんでした。")
-        return full_text
-    except Exception as e:
-        raise IOError(f"ファイルの読み込み中にエラーが発生しました: {e}")
+    if file_path.lower().endswith('.docx'):
+        from docx import Document
+        try:
+            document = Document(file_path)
+            full_text = "\n".join([para.text for para in document.paragraphs if para.text.strip()])
+            if not full_text:
+                print("警告: ドキュメント内にテキストを含む段落が見つかりませんでした。")
+            return full_text
+        except Exception as e:
+            raise IOError(f"docxファイルの読み込み中にエラーが発生しました: {e}")
+    elif file_path.lower().endswith('.txt'):
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        except Exception as e:
+            raise IOError(f"txtファイルの読み込み中にエラーが発生しました: {e}")
+    else:
+        raise ValueError("対応していないファイル形式です。")
 
 def get_clustered_json_from_gemini(text: str) -> str:
     """与えられたテキストをGemini APIを使ってクラスタリングし、結果をJSON形式の文字列で返す。"""
