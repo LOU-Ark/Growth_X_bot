@@ -39,7 +39,7 @@ def get_clustered_json_from_gemini(text: str) -> str:
 
     # Geminiへの指示をJSON形式での出力を要求するように変更
     prompt = f"""
-    以下のテキストを分析し、主要なトピックやテーマで5つのクラスターに分類してください。
+    以下のテキストを分析し、主要なトピックやテーマで10個のクラスターに分類してください。
     各クラスターについて、テーマ名、要約、キーワードを抽出し、必ず以下のJSON形式で出力してください。
 
     ```json
@@ -74,6 +74,36 @@ def get_clustered_json_from_gemini(text: str) -> str:
           "theme": "テーマ名5",
           "summary": "要約5",
           "keywords": ["キーワード9", "キーワード10"]
+        }},
+        {{
+          "cluster_id": 6,
+          "theme": "テーマ名6",
+          "summary": "要約6",
+          "keywords": ["キーワード11", "キーワード12"]
+        }},
+        {{
+          "cluster_id": 7,
+          "theme": "テーマ名7",
+          "summary": "要約7",
+          "keywords": ["キーワード13", "キーワード14"]
+        }},
+        {{
+          "cluster_id": 8,
+          "theme": "テーマ名8",
+          "summary": "要約8",
+          "keywords": ["キーワード15", "キーワード16"]
+        }},
+        {{
+          "cluster_id": 9,
+          "theme": "テーマ名9",
+          "summary": "要約9",
+          "keywords": ["キーワード17", "キーワード18"]
+        }},
+        {{
+          "cluster_id": 10,
+          "theme": "テーマ名10",
+          "summary": "要約10",
+          "keywords": ["キーワード19", "キーワード20"]
         }}
       ]
     }}
@@ -86,7 +116,7 @@ def get_clustered_json_from_gemini(text: str) -> str:
     print("\nGeminiによるクラスタリングを開始します...")
     try:
         response = client.models.generate_content(
-            model="gemini-2.0-flash",  # gemini-2.0 シリーズ
+            model=config.MODEL_NAME,  # configで指定したモデル名を使用
             contents=prompt,
         )
         return response.text

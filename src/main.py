@@ -46,13 +46,17 @@ def run_normal_cycle():
         return
     selected_topic = random.choice(clustered_data["clusters"])
     print(f"調査対象テーマ: {selected_topic['theme']}")
-    research_result_text = research_topic.research_and_summarize_with_gemini(selected_topic)
-    match = re.search(r"\{.*\}", research_result_text, re.DOTALL)
-    if not match: return
-    research_json_data = json.loads(match.group(0))
-    tweet_text = research_json_data.get("tweet", "")
+    rich_content = research_topic.generate_rich_content_from_topic(selected_topic)
+    tweet_text = rich_content.get("character_post", {}).get("tweet", "")
+    print(f"tweet_text: {tweet_text} \n")
     if tweet_text:
-        entry = { "theme": selected_topic.get('theme'), "tweet": tweet_text, "created_at": datetime.now().isoformat() }
+        entry = {
+            "topic_id": selected_topic.get('cluster_id'),
+            "theme": selected_topic.get('theme'),
+            "keywords": selected_topic.get('keywords'),
+            "created_at": datetime.now().isoformat(),
+            **rich_content # 生成されたリッチな情報をすべて結合
+        }
         # 長期記憶に追記
         try:
             with open(ALL_KNOWLEDGE_LOG_PATH, 'r', encoding='utf-8') as f:
@@ -73,6 +77,7 @@ def run_normal_cycle():
         with open(RECENT_KNOWLEDGE_PATH, 'w', encoding='utf-8') as f:
             json.dump(recent_log, f, ensure_ascii=False, indent=2)
         print(f"短期ログを {RECENT_KNOWLEDGE_PATH} に保存しました。")
+        print("ツイートを投稿しています...")
         x_poster.post_to_x(tweet_text)
     print("通常サイクル完了。")
 
@@ -95,17 +100,64 @@ def run_conceptualize_cycle():
     print(f"新しい活動クラスタを {ACTIVITY_CLUSTERS_PATH} に保存しました。")
     print("概念化サイクル完了。")
 
+def run_question_cycle(question: str):
+    print(f"\n--- 任意質問サイクルを実行します ---")
+    print(f"調査質問: {question}")
+    # テーマ・キーワード形式のダミーtopic_dataを作成
+    topic_data = {
+        'theme': question,
+        'keywords': []
+    }
+    rich_content = research_topic.generate_rich_content_from_topic(topic_data)
+    tweet_text = rich_content.get("character_post", {}).get("tweet", "")
+    print(f"\n【AIの回答】\n{tweet_text}\n")
+    print(f"--- 詳細な調査内容 ---\n{json.dumps(rich_content, ensure_ascii=False, indent=2)}\n")
+    # 必要なら知識ログ保存も可能
+    entry = {
+        "theme": question,
+        "created_at": datetime.now().isoformat(),
+        **rich_content
+    }
+    try:
+        with open(ALL_KNOWLEDGE_LOG_PATH, 'r', encoding='utf-8') as f:
+            all_log = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        all_log = {"knowledge_entries": []}
+    all_log["knowledge_entries"].append(entry)
+    with open(ALL_KNOWLEDGE_LOG_PATH, 'w', encoding='utf-8') as f:
+        json.dump(all_log, f, ensure_ascii=False, indent=2)
+    print(f"知識ログを {ALL_KNOWLEDGE_LOG_PATH} に保存しました。\n")
+    # Xにも投稿
+    if tweet_text:
+        print("ツイートを投稿しています...")
+        x_poster.post_to_x(tweet_text)
+
 def main():
     """このボットのメインコントローラー（1実行1アクションモデル）"""
     print(f"======== ボット処理開始 ({datetime.now()}) ========")
-    
+
+    # --- コマンドライン引数で強制実行・質問を判定 ---
+    # 例: python src/main.py --ask "AIとカルマの関係は？"
+    force_conceptualize = len(sys.argv) > 1 and sys.argv[1] in ['--force', '--conceptualize']
+    ask_mode = len(sys.argv) > 2 and sys.argv[1] == '--ask'
+    question = sys.argv[2] if ask_mode else None
+
+    if ask_mode and question:
+        run_question_cycle(question)
+        print(f"======== 今回の処理は完了しました ({datetime.now()}) ========\n")
+        return
+
     # 1. 現在の記録済み投稿数を取得
     post_count = get_current_post_count()
     print(f"現在の記録済み投稿数: {post_count}")
 
     # 2. 条件に応じて、どちらか「一つだけ」のサイクルを実行
-    if post_count >= CONCEPT_GENERATION_THRESHOLD:
-        print(f">>> 投稿数が閾値({CONCEPT_GENERATION_THRESHOLD})に達しました。")
+    if force_conceptualize or post_count >= CONCEPT_GENERATION_THRESHOLD:
+        if force_conceptualize:
+            print(f">>> [強制実行] 新しいペルソナを反映するため、概念化サイクルを実行します。")
+        else:
+            print(f">>> 投稿数が閾値({CONCEPT_GENERATION_THRESHOLD})に達しました。")
+        
         run_conceptualize_cycle()
         # 概念化後に短期記憶をリセット
         with open(RECENT_KNOWLEDGE_PATH, 'w') as f:

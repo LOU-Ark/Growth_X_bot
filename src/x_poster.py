@@ -22,23 +22,34 @@ def trim_to_140_chars(text: str) -> str:
         return text[:last_period + 1]
     return text[:140]
 
-def post_to_x(text: str):
-    """指定されたテキストをXに投稿する。APIエラーを堅牢にハンドリングする。"""
-    auth = OAuth1(api_key, api_secret, access_token, access_token_secret)
+def post_to_x(text: str, bearer_token=None):
+    """
+    指定されたテキストをXに投稿する。
+    - bearer_token: OAuth2ユーザー認証で取得したアクセストークン（推奨）
+    - OAuth1.0a認証もサポート（ただしAPI権限が必要）
+    """
     url = "https://api.twitter.com/2/tweets"
     payload = {"text": text}
+    headers = {"Content-Type": "application/json"}
+    if bearer_token:
+        headers["Authorization"] = f"Bearer {bearer_token}"
+        auth = None
+    else:
+        # OAuth1.0a認証（API権限が必要）
+        auth = OAuth1(api_key, api_secret, access_token, access_token_secret)
     try:
-        response = requests.post(url, auth=auth, json=payload)
+        response = requests.post(url, headers=headers, json=payload, auth=auth)
         if response.status_code == 429:
             print("警告: X (Twitter) APIのレート制限に達しました。今回の投稿はスキップします。")
             return
         if response.status_code == 403:
             print(f"警告: 投稿が拒否されました (403 Forbidden): {response.text}")
-            print("ツイート内容が直近のものと重複している可能性があります。")
+            print("ツイート内容が直近のものと重複している可能性があります。あるいはAPI権限不足です。")
             return
-        if response.status_code != 201:
+        if response.status_code not in (200, 201):
             raise Exception(f"Xへの投稿に失敗しました: {response.status_code} {response.text}")
         print(f"✅ Xに投稿しました: {text}")
+        print(response.json())
     except requests.exceptions.RequestException as e:
         print(f"エラー: Xへの投稿中に予期せぬエラーが発生しました: {e}")
         # raise e  # 必要に応じて再スロー

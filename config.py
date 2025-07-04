@@ -41,3 +41,6 @@ if any(x_key_values) and not all(x_key_values):
         "Some X API keys are set, but not all. "
         f"Please set all X keys or none of them. Missing: {', '.join(missing_x_keys)}"
     )
+
+# 使用するAIモデル名
+MODEL_NAME = "gemini-2.0-flash-exp" #"gemini-2.5-pro"
