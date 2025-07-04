@@ -174,9 +174,7 @@ python -m pytest test/
 
 ## 関連リンク
 
-- [Growth_X_bot詳細README](Growth_X_bot/README.md)
-- [概念モデル図](Growth_X_bot/docs/conceptual_model.png)
-- [テスト結果](Growth_X_bot/test/)
+- [概念モデル図](./docs/conceptual_model.png)
 
 ## サポート
 
