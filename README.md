@@ -174,7 +174,7 @@ python -m pytest test/
 
 ## 関連リンク
 
-- [概念モデル図](./docs/conceptual_model.png)
+![ボットの概念モデル](./docs/conceptual_model.png)
 
 ## サポート
 
